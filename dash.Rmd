@@ -1,0 +1,917 @@
+---
+title: "Análise da Rede de Obesidade"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard) #para gerar o relatório
+library(tidyverse) #para manipular as bases de dados.
+library(igraph)  #para gerar as metricas de rede
+library(tidygraph) #para gerar grafos.
+library(visNetwork) #para gerar grafos
+library(summarytools) #para gerar estatasticas descritivas.
+library(tidyr) # para ajudar na "arrumação" (tidying) dos dados
+library(dplyr) # para manipulação de dados (ele tb está dentro do tidyverse)
+library(ndtv) #para gerar grafos
+library(openxlsx) #para importar as tabelas em xlsx
+library(DT)
+library(knitr)
+library(RColorBrewer)
+library(visNetwork)
+library(shiny)
+library(stringi)
+library(devtools)
+library(rsconnect)
+```
+
+```{r}
+# Importar tabela de nós do excel
+nos_completo_abr2021_a_abr2024 <- read.xlsx("C:/Users/Jaqueline/Desktop/JAQUELINE/CORDIAL/ANALISE DE REDES/SCRIPT R/nos_completo_abr2021_a_abr2024.xlsx")
+```
+
+# Relatório 2º/2023, de jun.22 a mai.23
+
+## Row {data-width="200"}
+
+### **Introdução**
+
+A obesidade é uma doença complexa e multifatorial e que, por isso, depende de ações intersetoriais para a redução de sua prevalência. São diversas as perspectivas pelas quais a obesidade pode ser abordada, algumas delas divergentes, ou mesmo conflitivas. Como consequência, também são diversas as pessoas e organizações chave (stakeholders) existentes no ecossistema relacionado à obesidade. Seus trabalhos e projetos, por vezes, seguem paralelo, se sobrepõem ou conflitam, resultando em uma multiplicidade pulverizada de iniciativas. Para melhor conhecer esse ecossistema, realizamos um mapeamento das organizações e das pessoas, permitindo situá-las, além de apontar a atuação e a interação entre elas.
+
+## Row {data-width="200"}
+
+### **Objetivos**
+
+Ao desenvolver a análise de rede, o principal objetivo é **conhecer a rede, de forma dinâmica, permitindo a análise das relações que nela se estabelecem**. A partir deste objetivo principal surgem outros, mais específicos, como **identificar as centralidades e marginalidades da rede**. Isso possibilita **compreender a força de determinadas ações e narrativas em relação às demais e a interferência na articulação entre nichos e atores**. Essas aproximações podem **potencializar ações marginais, criar sinergias em torno de projetos exitosos, identificar dificuldades de relacionamento, permitindo uma atuação estratégica do Instituto Cordial**. 
+Realizada de forma sistemática e contínua, como o Painel Brasileiro da Obesidade se propôs a fazer, a análise também permite **verificar o êxito ou fracasso de ações de articulação**. Uma rede pouco densa que passa a se adensar por determinado motivo, como a realização de um evento; a ampliação da quantidade de relações inter-nichos, após uma reunião orientada; o deslocamento de organizações ou pessoas marginais rumo ao centro da rede, garantindo visibilidade, são movimentos que podem ser encarados como exitosos em um trabalho de articulação intersetorial. No sentido inverso, o distanciamento entre organizações, a dispersão de nichos e o enfraquecimento de laços, podem prejudicar ações, projetos comuns, gerando concorrência e desperdício de recursos.
+A análise da rede também possibilita **identificar, em um conjunto de atores, aqueles mais estratégicos, com um maior número de relações ou que conectam mais grupos à rede, com quem a aproximação para alguma ação pode ser mais efetiva em função da sua posição no ecossistema**.
+
+## Row {data-width="300"}
+
+### **Metodologia**
+
+A Análise de Redes Sociais (ARS) é uma metodologia que permite o estudo das interações entre os atores de um sistema social, representados como nós, e suas conexões, chamadas de arestas. Para realizar essa análise, primeiramente, é preciso identificar ao menos uma variável relacional que associe todos os atores do sistema em estudo. No contexto da saúde, optamos por uma abordagem que envolve a busca ativa por eventos relacionados à obesidade, registrando as organizações e pessoas envolvidas. Essa escolha metodológica baseia-se na observação indireta das relações entre os atores, coletando dados sobre os eventos e os participantes. Esses dados são então convertidos em uma rede one-mode para simplificar a análise. Além disso, são realizadas correções na base de dados para garantir sua precisão, como a exclusão de eventos com apenas um participante. Nos grafos elaborados, destacamos visualmente a influência das organizações e das relações, onde o tamanho dos nós e a espessura das arestas refletem o número de conexões estabelecidas.
+
+**Limitações:** É importante observar que esta ARS não utiliza amostragem probabilística, o que impossibilita a realização de inferências sobre todo o universo relacional. Além disso, ela foi construída sob a ótica do observador, ou seja, o Instituto Cordial, e não sob a rede em si. Diante deste aspecto, todos os eventos realizados no contexto do Painel Brasileiro de Obesidade foram mapeados, não garantindo o mesmo em relação a outras organizações.
+
+## Row {data-width="300"}
+
+### **Métricas da rede**
+
+Há uma infinidade de métricas passíveis de aferição a partir de uma rede. Escolhemos algumas medidas topológicas que entendemos ser eficientes para a descrição do universo relacional analisado e medidas de centralidade, que permitem indicar um sistema de status dentro do universo analisado, ou seja, quem são os atores mais (ou menos) ativos ou que possuem mais (ou menos) prestígio na rede. As métricas selecionadas foram:
+
+-   **Densidade:** A densidade de uma rede mensura o quão próxima a rede está de sua “completude”. Ela varia entre 0 e 1, onde 0 indicaria ausência de qualquer relação e 1 uma rede em que todos os atores estão conectados entre si. Habitualmente, ela diminui quando o tamanho da rede aumenta. A densidade de uma rede representa os laços observados em relação aos possíveis, matematicamente, dentro do grafo.
+
+-   **Diâmetro:** O diâmetro de uma rede representa a distância geodésica máxima entre dois membros de um grupo ou de um subgrupo. A distância geodésica é a menor maior distância entre dois atores, ou seja, o menor maior caminho para que um ator A alcance um ator B. Uma rede é dita conectada se houver um caminho entre todos os seus membros ou vértices.
+
+-   **Modularidade:** É uma medida que indica o quão bem uma rede poderia ser dividida em comunidades modulares (também chamados de grupos, clusters ou comunidades). É uma medida que leva em consideração a relação dos nós com seus vizinhos, ou seja, uma medida de vizinhança, levando em consideração o quanto um nó tende a aparecer em determinado grupo. Resumidamente, para cada comunidade, essa medida calcula o número de arestas dentro e fora dela, retornando um valor entre -1 e +1. O valor positivo +1 significa que todas as arestas de uma comunidade estão conectando os nós dentro dela, ou seja, é uma comunidade densamente conectada. Um valor de 0 significa que metade das arestas de uma comunidade estão conectando nós dentro dela, e por fim, um valor de -1 significa que não existem arestas conectando nós dentro da comunidade, e ao invés disso, eles estão conectando nós fora dela.
+Essa métrica, por ser construída matematicamente, é também um validador do grafo, pois os grupos possuem características homogeneizantes entre si que poderiam ser indicadas de forma discricionária, que aparecem em função das relações como, por exemplo, entre entidades governamentais, ou universidades. Além disso, a modularidade permite descobrir conexões que fogem a essa homogeneidade aparente, revelando outros laços e afinidades possíveis entre atores.
+
+- **Comunidade:** na teoria de Análise de Redes, uma comunidade pode ser definida como um agrupamento de nós em um grafo que têm uma maior probabilidade de se conectarem entre si do que com o restante da rede. É antes de tudo mais uma definição estatística sobre conectividade do que sobre pertencimento, apesar das comunidades identificadas na rede terem, muitas vezes, um significado expressivo no mundo real. É o que comumente chamamos de nichos, pois tem uma densidade e coerência interna, mas que não necessariamente tem ressonância na rede, pois têm relação direta em como a informação é disseminada dentro da rede. Quanto mais comunidades um grafo possui, mais devagar uma informação irá circular, uma vez que levará mais tempo para se espalhar entre os diferentes grupos.
+
+-   **Centralidade:** É o indicador mais simples de importância de um nó. Consiste em medir a quantidade de nós com os quais possui adjacência/relação. Podemos interpretá-lo afirmando que quanto mais um ator é central, desse ponto de vista, mais ele é ativo no sistema. No sentido inverso, outros nós, não centrais, podem ser gradativamente mais marginais na rede.
+
+-   **Grau médio:** O grau médio representa o número de conexões que, em média, os nós de uma rede possuem. Nós que têm mais conexões/relações podem ser considerados mais ativos e, no sentido inverso, mais isolados.
+
+-   **Centralidade do autovetor:** Este tipo de centralidade avalia a importância/influência de um nó na rede em cima da qualidade de suas conexões, mensurada a partir da centralidade dos nós com que se relaciona. Nós com maior centralidade de autovetor são aqueles mais conectados a outros nós cujas conexões são relevantes. 
+
+-   **Grau de intermediação:** A centralidade de intermediação é baseada na ideia de que certos atores numa determinada rede controlam as interações entre dois outros atores. Isto é, quando dois atores não são adjacentes, eles precisam de pontes para suas trocas. Neste caso, atores com alto grau de intermediação têm a capacidade de facilitar ou obstruir, de forma seletiva, fluxos de informações dentro da rede. Alguns nós, se desconectados da rede, podem levar consigo componentes, ou clusters, que deles dependiam para acessar a rede.
+
+# Rede das instituições
+
+```{r include=FALSE}
+# Importar tabela da rede de ju.22 a mai.23
+rede_2_jun2022_a_mai2023 <- read.xlsx("C:/Users/Jaqueline/Desktop/JAQUELINE/CORDIAL/ANALISE DE REDES/SCRIPT R/rede_2_jun2022_a_mai2023.xlsx")
+
+```
+
+## Row {data-width="150"}
+
+### **Universo**
+
+```{r include=FALSE}
+# Calcular o número de ocorrências de cada par de conexões
+rede_2_jun2022_a_mai2023_weighted <- rede_2_jun2022_a_mai2023 %>%
+  group_by(from, to) %>%
+  summarise(weight = n()) %>%
+  ungroup()
+
+# Verificar quais IDs de vértices estão presentes na tabela de conexões
+ids_presentes <- unique(c(rede_2_jun2022_a_mai2023_weighted$from, rede_2_jun2022_a_mai2023_weighted$to))
+
+# Filtrar a tabela de vértices para incluir apenas os IDs presentes na tabela de conexões
+vertices_filtrados <- nos_completo_abr2021_a_abr2024[nos_completo_abr2021_a_abr2024$id_entidade %in% ids_presentes, ]
+
+# Renomear a coluna id_entidade para id
+vertices_filtrados <- vertices_filtrados %>% rename(id = id_entidade)
+
+# Remover acentos e caracteres especiais dos nomes das entidades
+vertices_filtrados$nome_entidade <- stri_trans_general(vertices_filtrados$nome_entidade, "Latin-ASCII")
+
+# Gerar o grafo no igraph com os vértices filtrados e as conexões com pesos
+net_2_jun2022_a_mai2023 <- graph_from_data_frame(d = rede_2_jun2022_a_mai2023_weighted, vertices = vertices_filtrados, directed = FALSE)
+
+# Gerar matriz de adjacência no igraph
+matriz_2_jun2022_a_mai2023 <- as_adjacency_matrix(net_2_jun2022_a_mai2023, attr = "weight", sparse = FALSE)
+
+```
+
+
+```{r include=FALSE}
+
+# Contar o número de instituições conectadas
+grau <- degree(matriz_2_jun2022_a_mai2023)
+num_instituicoes_conectadas <- sum(grau > 0)
+
+# Contar o número de arestas na rede
+num_edges <- ecount(net_2_jun2022_a_mai2023)
+
+# Contar o número de conexos do Instituto Cordial
+id_instituto_cordial <- 1461195421
+
+grau_instituto_cordial <- grau[which(V(net_2_jun2022_a_mai2023)$name == id_instituto_cordial)] # Encontrar o grau do Instituto Cordial
+
+# Contar eventos diferentes
+num_eventos <- rede_2_jun2022_a_mai2023 %>%
+  distinct(id_evento) %>%
+  n_distinct()
+
+# Exibir os resultados
+cat("Numero de eventos na rede:", num_eventos, "\n")
+cat("Numero de instituicoes conectadas na rede:", num_instituicoes_conectadas, "\n")
+cat("Numero de arestas na rede:", num_edges, "\n")
+cat("Numero de conexoes do Instituto Cordial:", grau_instituto_cordial, "\n")
+
+```
+
+```{r include=FALSE}
+# Identificar o ID do Instituto Cordial
+id_instituto_cordial <- vertices_filtrados %>%
+  filter(nome_entidade == "Instituto Cordial") %>%
+  select(id) %>%
+  as.character()
+
+# Encontrar os vizinhos do Instituto Cordial (instituições conectadas diretamente)
+vizinhos_cordial <- neighbors(net_2_jun2022_a_mai2023, id_instituto_cordial)
+
+# Obter os IDs das instituições conectadas
+ids_vizinhos_cordial <- V(net_2_jun2022_a_mai2023)[vizinhos_cordial]$name
+
+# Contar o número de instituições diferentes conectadas diretamente ao Instituto Cordial
+num_conexoes_diretas <- length(ids_vizinhos_cordial)
+
+# Exibir o resultado
+num_conexoes_diretas
+
+```
+
+Este relatório é referente ao segundo quadrimestre de 2023 e compreende os 12 meses anteriores, de **01 de junho de 2022 a 31 de maio de 2023**. Durante esse período, foi possível mapear:
+
+-   **303** eventos sobre o universo da obesidade
+-   **560** instituições conectadas
+-   **302** conexões do Instituto Cordial e **128** conexões com instituições diferentes
+-   **3.097** relacionamentos concretizados
+
+## Row {data-width="250"}
+
+### **Métricas gerais**
+
+```{r include=FALSE}
+# Definir a semente aleatória
+set.seed(052023)
+
+# Calcular as comunidades da rede usando o algoritmo Louvain
+comunidades <- cluster_louvain(net_2_jun2022_a_mai2023)
+
+# Calcular as métricas da rede
+densidade <- round(edge_density(net_2_jun2022_a_mai2023), 4)
+diametro <- round(diameter(net_2_jun2022_a_mai2023), 2)
+raio <- round(radius(net_2_jun2022_a_mai2023), 2)
+comprimento_medio <- round(mean_distance(net_2_jun2022_a_mai2023), 2)
+modularidade <- round(modularity(net_2_jun2022_a_mai2023, comunidades$membership), 4)
+grau_medio <- round(mean(degree(matriz_2_jun2022_a_mai2023)), 2)
+#num_componentes <- components(matriz_2_jun2022_a_mai2023)$no
+distancia_geodesica_media <- round(mean_distance(net_2_jun2022_a_mai2023, directed = FALSE), 2)
+transitividade_global <- round(transitivity(net_2_jun2022_a_mai2023, type = "global"), 4)
+transitividade_media <- round(transitivity(net_2_jun2022_a_mai2023, type = "average"), 4)
+assortatividade <- round(assortativity_degree(net_2_jun2022_a_mai2023), 4)
+assortatividade_comunidade <- round(assortativity_nominal(net_2_jun2022_a_mai2023, comunidades$membership), 4)
+
+# Criar o dataframe com todas as métricas
+metricas <- data.frame(
+  Metrica = c(
+    "Densidade", 
+    "Diametro", 
+    "Raio", 
+    "Comprimento Medio do Caminho", 
+    "Modularidade", 
+    "Grau Medio",
+    "Distancia Geodesica Media",
+    "Transitividade Global",
+    "Transitividade Media",
+    "Assortatividade",
+    "Assortatividade da Comunidade"
+  ),
+  Valor = c(
+    densidade, 
+    diametro, 
+    raio, 
+    comprimento_medio, 
+    modularidade, 
+    grau_medio,
+    distancia_geodesica_media,
+    transitividade_global,
+    transitividade_media,
+    assortatividade,
+    assortatividade_comunidade
+  )
+)
+
+# Renderizar a tabela no Flexdashboard
+metricas <- datatable(metricas, 
+          options = list(dom = 't', paging = FALSE, searching = FALSE),
+          rownames = FALSE)
+```
+
+```{r include=TRUE}
+# Output da tabela das metricas  (em geral) da rede
+metricas
+```
+
+### **Grafo da rede**
+
+```{r include=TRUE}
+# Definir uma paleta de cores com pelo menos 12 cores
+paleta_cores <- brewer.pal(12, "Set3")
+
+# Definir uma paleta de cores com tons de cinza e preto
+paleta_cores_arestas <- colorRampPalette(c("lightgray", "black"))(max(rede_2_jun2022_a_mai2023_weighted$weight))
+
+# Atribuir cores e espessuras às arestas com base no peso
+rede_2_jun2022_a_mai2023_weighted <- rede_2_jun2022_a_mai2023_weighted %>%
+  mutate(color = paleta_cores_arestas[weight],
+         width = weight)
+
+# Atribuir cores aos vértices com base no setor
+#vertices_filtrados$color <- brewer.pal(12, "Set3")[match(vertices_filtrados$setor, unique(vertices_filtrados$setor))]
+
+# Garantir que todos os setores estejam tratados como grupos
+vertices_filtrados$group <- vertices_filtrados$setor
+
+# Gerar a visualização da rede com visNetwork
+visNetwork(nodes = vertices_filtrados, edges = rede_2_jun2022_a_mai2023_weighted) %>%
+  visIgraphLayout() %>%
+  visNodes(font = list(size = 20)) %>%
+  visEdges(scaling = list(min = 1, max = 10), color = list(color = rede_2_jun2022_a_mai2023_weighted$color, highlight = "red")) %>%
+  visOptions(
+    highlightNearest = TRUE, 
+    nodesIdSelection = list(enabled = TRUE, useLabels = TRUE, main = "Selecione a Instituição"),
+    selectedBy = list(variable = "group", main = "Selecione pelo Grupo")
+  )
+```
+
+```{r eval=FALSE}
+### Opção de visualização da rede sem o "Select"
+
+# Definir uma paleta de cores em tons pastéis
+paleta_cores <- c("#B3E2CD", "#FDDBC7", "#CBD5E8", "#F4CAE4", "#E6F5C9")
+
+# Atribuir cores aos vértices com base no setor
+vertices_filtrados$color <- paleta_cores[match(vertices_filtrados$setor, unique(vertices_filtrados$setor))]
+
+# Gerar a visualização da rede
+visNetwork(nodes = vertices_filtrados, edges = rede_2_jun2022_a_mai2023) %>%
+  visIgraphLayout() %>% 
+  visGroups()
+```
+
+## Row {data-width="150"}
+
+### **Análise das métricas gerais**
+
+A **densidade** da rede é de 0,0198, indicando uma rede dispersa, com apenas 1,98% das relações possíveis. Essa medida tende a ser muito pequena para redes grandes, como é o caso analisado aqui, em que há a junção de perspectivas muito diversas de atores que lidam com a obesidade. Inclusive, há muitos nichos desconectados. Em comparação com os doze meses do último quadrimestre (fevereiro de 2022 a janeiro de 2023), o número de conexões da rede diminuiu. Neste mapeamento, foram identificados menos eventos, o que também pode resultar em menos conexões. Apesar de terem sido mapeados menos eventos, foi observado que mais instituições participando da rede, este pode ser outro fator que contribuiu para a redução da densidade.
+
+O **diâmetro** da rede é 8, o que significa que para que uma instituição entre em contato com outra, um ator marginal precisaria de ao menos oito contatos, passando por atores centrais, para chegar a outro ator marginal no sentido inverso. Ainda que seja um recorte temporal, a medida estimula a intersetorialidade, pois há a possibilidade de acessar as instituições mais distantes. O Diâmetro da rede aumentou em relação ao último relatório.
+
+Foram identificadas 50 **comunidades**, pelo algoritmo de Louvain. Outra medida importante é a **modularidade**, que na rede apresentada é 0,619. Ela indica que a rede possui comunidades significativamente densas, com a maioria dos atores possuindo conexões entre os outros atores dentro da própria comunidade. Ou seja, os nichos são articulados entre si, mas não com outros.
+
+
+```{r include=FALSE}
+library(dplyr)
+library(stringi)
+
+# Definir o ID do Instituto Cordial (ajuste conforme necessário)
+id_instituto_cordial <- 1461195421
+
+# Filtrar as conexões que envolvem o Instituto Cordial
+conexoes_cordial <- rede_2_jun2022_a_mai2023 %>%
+  filter(from == id_instituto_cordial | to == id_instituto_cordial)
+
+# Identificar as instituições conectadas com o Instituto Cordial e contar as conexões
+conexoes_cordial_contagem <- conexoes_cordial %>%
+  mutate(instituicao_conectada = ifelse(from == id_instituto_cordial, to, from)) %>%
+  group_by(instituicao_conectada) %>%
+  summarise(conexoes = n()) %>%
+  arrange(desc(conexoes)) %>%
+  head(5)
+
+# Obter os nomes das instituições conectadas a partir da tabela de vértices filtrados
+instituicoes_top5 <- vertices_filtrados %>%
+  filter(id %in% conexoes_cordial_contagem$instituicao_conectada) %>%
+  select(id, nome_entidade)
+
+# Combinar os data frames para incluir o nome da instituição e o número de conexões
+resultado <- merge(conexoes_cordial_contagem, instituicoes_top5, by.x = "instituicao_conectada", by.y = "id") %>%
+  select(nome_entidade, conexoes)
+
+# Exibir o resultado
+print(resultado)
+
+```
+
+```{r include=FALSE}
+library(igraph)
+library(dplyr)
+library(stringi)
+
+# Calcular a medida de centralidade do autovetor para a rede inteira
+centralidade_autovetor <- eigen_centrality(net_2_jun2022_a_mai2023)$vector
+
+# Criar um data frame com os IDs e os valores de centralidade do autovetor
+df_centralidade_autovetor <- data.frame(
+  id = V(net_2_jun2022_a_mai2023)$name,
+  centralidade_autovetor = centralidade_autovetor
+)
+
+# Obter as cinco instituições com maiores valores de centralidade do autovetor
+top5_centralidade_autovetor <- df_centralidade_autovetor %>%
+  arrange(desc(centralidade_autovetor)) %>%
+  head(5)
+
+# Obter os nomes completos das instituições a partir da tabela de vértices filtrados
+entidades_top5_centralidade_autovetor <- vertices_filtrados %>%
+  filter(id %in% top5_centralidade_autovetor$id) %>%
+  select(id, nome_entidade)
+
+# Combinar os data frames para incluir o nome da instituição e a centralidade do autovetor
+resultado <- merge(entidades_top5_centralidade_autovetor, top5_centralidade_autovetor, by = "id") %>%
+  select(nome_entidade, centralidade_autovetor)
+
+# Garantir que os textos estejam em UTF-8
+resultado$nome_entidade <- iconv(resultado$nome_entidade, from = "latin1", to = "UTF-8")
+
+# Exibir o resultado
+print(resultado)
+
+```
+
+```{r include=FALSE}
+library(igraph)
+library(dplyr)
+library(stringi)
+
+# Calcular a medida de intermediação para a rede inteira
+intermediacao <- betweenness(matriz_2_jun2022_a_mai2023)
+
+# Criar um data frame com os IDs e os valores de intermediação
+df_intermediacao <- data.frame(
+  id = V(net_2_jun2022_a_mai2023)$name,
+  intermediacao = intermediacao
+)
+
+# Identificar o ID do Instituto Cordial
+id_instituto_cordial <- vertices_filtrados %>%
+  filter(nome_entidade == "Instituto Cordial") %>%
+  select(id) %>%
+  as.character()
+
+# Encontrar as conexões do Instituto Cordial
+conexoes_cordial <- E(net_2_jun2022_a_mai2023)[from(id_instituto_cordial) | to(id_instituto_cordial)]
+
+# Encontrar os IDs das instituições conectadas ao Instituto Cordial
+ids_conexoes_cordial <- c(head_of(net_2_jun2022_a_mai2023, conexoes_cordial)$name, tail_of(net_2_jun2022_a_mai2023, conexoes_cordial)$name)
+ids_conexoes_cordial <- setdiff(ids_conexoes_cordial, id_instituto_cordial)  # Remover o próprio ID do Instituto Cordial
+
+# Filtrar as instituições conectadas ao Instituto Cordial com base na intermediação
+df_conexoes_cordial <- df_intermediacao %>%
+  filter(id %in% ids_conexoes_cordial)
+
+# Obter as cinco instituições com maiores valores de intermediação
+top5_conexoes_cordial <- df_conexoes_cordial %>%
+  arrange(desc(intermediacao)) %>%
+  head(5)
+
+# Obter os nomes completos das instituições a partir da tabela de vértices filtrados
+entidades_top5_conexoes_cordial <- vertices_filtrados %>%
+  filter(id %in% top5_conexoes_cordial$id) %>%
+  select(id, nome_entidade)
+
+# Combinar os data frames para incluir o nome da instituição e a intermediação
+resultado <- merge(entidades_top5_conexoes_cordial, top5_conexoes_cordial, by = "id") %>%
+  select(nome_entidade, intermediacao)
+
+# Garantir que os textos estejam em UTF-8
+resultado$nome_entidade <- iconv(resultado$nome_entidade, from = "latin1", to = "UTF-8")
+
+# Exibir o resultado
+print(resultado)
+
+```
+
+
+
+## Row {data-width="150"}
+
+### **Distribuição do tamanho das comunidades**
+
+```{r include=FALSE}
+# Número de comunidades
+num_comunidades <- length(comunidades)
+
+# Tamanho das comunidades
+tamanhos_comunidades <- sizes(comunidades)
+
+# Visualizar as informações
+cat("Numero total de comunidades:", num_comunidades, "\n")
+cat("Tamanhos das comunidades:", tamanhos_comunidades, "\n")
+
+```
+
+```{r include=TRUE}
+# Criar um data frame com o tamanho das comunidades
+df_tamanhos_comunidades <- data.frame(tamanho = as.vector(tamanhos_comunidades))
+
+# Instalar e carregar o pacote ggplot2 se necessário
+if (!require(ggplot2)) install.packages("ggplot2")
+library(ggplot2)
+
+# Criar o histograma usando ggplot2
+ggplot(df_tamanhos_comunidades, aes(x = tamanho)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "white", boundary = 0.5) +
+  labs(
+    title = "Distribuicao do Tamanho das Comunidades", 
+    x = "Tamanho da Comunidade", 
+    y = "Frequencia",  # Evitando caracteres especiais
+    subtitle = paste("Foram identificadas", num_comunidades, "comunidades na rede")
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+
+```
+
+### **Sobre as métricas da rede de conexões**
+
+```{r}
+# Identificar a comunidade do Instituto Cordial
+id_instituto_cordial <- 1461195421
+comunidade_cordial <- comunidades$membership[which(V(net_2_jun2022_a_mai2023)$name == id_instituto_cordial)]
+
+# Extrair o subgrafo correspondente a essa comunidade
+vertices_comunidade <- which(comunidades$membership == comunidade_cordial)
+subgrafo_comunidade <- induced_subgraph(net_2_jun2022_a_mai2023, vids = vertices_comunidade)
+
+# Calcular as métricas topográficas para o subgrafo
+densidade_comunidade <- round(edge_density(subgrafo_comunidade), 4)
+diametro_comunidade <- round(diameter(subgrafo_comunidade), 2)
+raio_comunidade <- round(radius(subgrafo_comunidade), 2)
+comprimento_medio_comunidade <- round(mean_distance(subgrafo_comunidade), 2)
+modularidade_comunidade <- round(modularity(subgrafo_comunidade, comunidades$membership[vertices_comunidade]), 4)
+# grau_medio_comunidade <- round(mean(degree(subgrafo_comunidade)), 2)
+# num_componentes_comunidade <- components(subgrafo_comunidade)$no
+distancia_geodesica_media_comunidade <- round(mean_distance(subgrafo_comunidade, directed = FALSE), 2)
+transitividade_global_comunidade <- round(transitivity(subgrafo_comunidade, type = "global"), 4)
+transitividade_media_comunidade <- round(transitivity(subgrafo_comunidade, type = "average"), 4)
+assortatividade_comunidade <- round(assortativity_degree(subgrafo_comunidade), 4)
+
+# Criar o dataframe com todas as métricas da comunidade
+metricas_comunidade <- data.frame(
+  Metrica = c(
+    "Densidade", 
+    "Diametro", 
+    "Raio", 
+    "Comprimento Medio do Caminho", 
+    "Modularidade", 
+    # "Grau Medio",
+    # "Numero de Componentes",
+    "Distancia Geodesica Media",
+    "Transitividade Global",
+    "Transitividade Media",
+    "Assortatividade"
+  ),
+  Valor = c(
+    densidade_comunidade, 
+    diametro_comunidade, 
+    raio_comunidade, 
+    comprimento_medio_comunidade, 
+    modularidade_comunidade, 
+    # grau_medio_comunidade,
+    # num_componentes_comunidade,
+    distancia_geodesica_media_comunidade,
+    transitividade_global_comunidade,
+    transitividade_media_comunidade,
+    assortatividade_comunidade
+  )
+)
+
+# Renderizar a tabela no Flexdashboard
+metricas_comunidade <- datatable(metricas_comunidade, 
+          options = list(dom = 't', paging = FALSE, searching = FALSE),
+          rownames = FALSE)
+
+```
+
+```{r include=TRUE}
+# Output da tabela das metricas (da comunidade que a cordial pertence) da rede
+metricas_comunidade
+```
+
+## Row {data-width="25"}
+
+### **Grau de intermediação**
+
+```{r include=FALSE}
+# Calcular a medida de intermediação para a rede inteira
+intermediacao <- betweenness(matriz_2_jun2022_a_mai2023)
+
+# Arredondar os valores de intermediação para duas casas decimais
+intermediacao <- round(intermediacao, 2)
+
+# Criar um data frame com os IDs e os valores de intermediação
+df_intermediacao <- data.frame(
+  id = V(net_2_jun2022_a_mai2023)$name,
+  intermediacao = intermediacao
+)
+
+# Obter as cinco instituições com maiores valores de intermediação
+top5_intermediacao <- df_intermediacao %>%
+  arrange(desc(intermediacao)) %>%
+  head(5)
+
+# Obter os nomes completos das instituições a partir da tabela de vértices filtrados
+entidades_top5_intermediacao <- vertices_filtrados %>%
+  filter(id %in% top5_intermediacao$id) %>%
+  select(id, nome_entidade)
+
+# Combinar os data frames
+entidades_top5_intermediacao <- merge(entidades_top5_intermediacao, top5_intermediacao, by = "id")
+
+# Remover a coluna de ID
+entidades_top5_intermediacao <- entidades_top5_intermediacao %>%
+  select(nome_entidade, intermediacao)
+
+# Garantir que os textos estejam em UTF-8
+entidades_top5_intermediacao$nome_entidade <- iconv(entidades_top5_intermediacao$nome_entidade, from = "latin1", to = "UTF-8")
+
+# Gerar a tabela formatada
+entidades_top5_intermediacao <- datatable(entidades_top5_intermediacao, 
+          options = list(dom = 't', paging = FALSE, searching = FALSE),
+          rownames = FALSE,
+          colnames = c("Nome da Entidade", "Intermediação"))
+
+```
+
+```{r include=TRUE}
+# Exibir a tabela formatada
+entidades_top5_intermediacao
+```
+
+### **Grafo do grau de intermediação**
+
+
+```{r include=TRUE}
+# Normalizar os valores de intermediação para variar entre 0 e 1
+intermediacao_norm <- (intermediacao - min(intermediacao)) / (max(intermediacao) - min(intermediacao))
+
+# Atribuir cores aos nós com base nos valores normalizados
+cores_intermediacao <- colorRampPalette(c("lightcoral", "darkred"))(length(intermediacao_norm))
+
+# Atribuir cores aos vértices com base na intermediação normalizada
+vertices_filtrados$color <- cores_intermediacao
+
+# Garantir que todos os setores estejam tratados como grupos
+vertices_filtrados$group <- vertices_filtrados$setor
+
+# Gerar a visualização da rede
+visNetwork(nodes = vertices_filtrados, edges = rede_2_jun2022_a_mai2023) %>%
+  visIgraphLayout() %>%
+  visNodes(font = list(size = 20)) %>%
+  visOptions(
+    highlightNearest = TRUE, 
+    nodesIdSelection = list(enabled = TRUE, useLabels = TRUE),
+    selectedBy = list(variable = "name")
+  )
+
+```
+
+## Row {data-width="25"}
+
+### **Centralidade**
+
+```{r include=FALSE}
+# Calcular a medida de centralidade de grau para a rede inteira
+centralidade_grau <- degree(matriz_2_jun2022_a_mai2023)
+
+# Criar um data frame com os IDs e os valores de centralidade de grau
+df_centralidade <- data.frame(
+  id = V(net_2_jun2022_a_mai2023)$name,
+  centralidade_grau = centralidade_grau
+)
+
+# Obter as cinco instituições com maiores valores de centralidade de grau
+top5_centralidade <- df_centralidade %>%
+  arrange(desc(centralidade_grau)) %>%
+  head(5)
+
+# Obter os nomes completos das instituições a partir da tabela de vértices filtrados
+entidades_top5_centralidade <- vertices_filtrados %>%
+  filter(id %in% top5_centralidade$id) %>%
+  select(id, nome_entidade)
+
+# Combinar os data frames
+entidades_top5_centralidade <- merge(entidades_top5_centralidade, top5_centralidade, by = "id")
+
+# Remover a coluna de ID
+entidades_top5_centralidade <- entidades_top5_centralidade %>%
+  select(nome_entidade, centralidade_grau)
+
+# Garantir que os textos estejam em UTF-8
+entidades_top5_centralidade$nome_entidade <- iconv(entidades_top5_centralidade$nome_entidade, from = "latin1", to = "UTF-8")
+
+# Gerar a tabela formatada
+entidades_top5_centralidade <- datatable(entidades_top5_centralidade, 
+          options = list(dom = 't', paging = FALSE, searching = FALSE),
+          rownames = FALSE,
+          colnames = c("Nome da Entidade", "Centralidade de Grau"))
+
+```
+
+```{r include=TRUE}
+# Exibir a tabela formatada
+entidades_top5_centralidade
+```
+
+### **Grafo da centralidade**
+
+```{r include=TRUE}
+# Normalizar os valores de centralidade para variar entre 0 e 1
+centralidade_norm <- (centralidade_grau - min(centralidade_grau)) / (max(centralidade_grau) - min(centralidade_grau))
+
+# Atribuir cores aos nós com base nos valores normalizados
+cores_centralidade <- colorRampPalette(c("lightblue", "darkblue"))(length(centralidade_norm))
+
+# Atribuir cores aos vértices com base na centralidade normalizada
+vertices_filtrados$color <- cores_centralidade
+
+# Garantir que todos os setores estejam tratados como grupos
+vertices_filtrados$group <- vertices_filtrados$setor
+
+# Gerar a visualização da rede
+visNetwork(nodes = vertices_filtrados, edges = rede_2_jun2022_a_mai2023) %>%
+  visIgraphLayout() %>%
+  visNodes(font = list(size = 20)) %>%
+  visOptions(
+    highlightNearest = TRUE, 
+    nodesIdSelection = list(enabled = TRUE, useLabels = TRUE),
+    selectedBy = list(variable = "name")
+  )
+
+```
+
+## Row {data-width="50"}
+
+### **Centralidade do autovetor**
+
+
+```{r include=FALSE}
+# Calcular a medida de centralidade do autovetor para a rede inteira
+centralidade_autovetor <- eigen_centrality(net_2_jun2022_a_mai2023)$vector
+
+# Arredondar os valores de centralidade do autovetor para duas casas decimais
+centralidade_autovetor <- round(centralidade_autovetor, 2)
+
+# Criar um data frame com os IDs e os valores de centralidade do autovetor
+df_centralidade_autovetor <- data.frame(
+  id = V(net_2_jun2022_a_mai2023)$name,
+  centralidade_autovetor = centralidade_autovetor
+)
+
+# Obter as cinco instituições com maiores valores de centralidade do autovetor
+top5_centralidade_autovetor <- df_centralidade_autovetor %>%
+  arrange(desc(centralidade_autovetor)) %>%
+  head(5)
+
+# Obter os nomes completos das instituições a partir da tabela de vértices filtrados
+entidades_top5_centralidade_autovetor <- vertices_filtrados %>%
+  filter(id %in% top5_centralidade_autovetor$id) %>%
+  select(id, nome_entidade)
+
+# Combinar os data frames
+entidades_top5_centralidade_autovetor <- merge(entidades_top5_centralidade_autovetor, top5_centralidade_autovetor, by = "id")
+
+# Remover a coluna de ID
+entidades_top5_centralidade_autovetor <- entidades_top5_centralidade_autovetor %>%
+  select(nome_entidade, centralidade_autovetor)
+
+# Garantir que os textos estejam em UTF-8
+entidades_top5_centralidade_autovetor$nome_entidade <- iconv(entidades_top5_centralidade_autovetor$nome_entidade, from = "latin1", to = "UTF-8")
+
+# Gerar a tabela formatada
+entidades_top5_centralidade_autovetor<- datatable(entidades_top5_centralidade_autovetor, 
+          options = list(dom = 't', paging = FALSE, searching = FALSE),
+          rownames = FALSE,
+          colnames = c("Nome da Entidade", "Centralidade do Autovetor"))
+
+```
+
+
+```{r include=TRUE}
+# Exibir a tabela formatada
+entidades_top5_centralidade_autovetor
+```
+
+### **Grafo da centralidade do autovetor**
+
+```{r include=TRUE}
+# Normalizar os valores de centralidade do autovetor para variar entre 0 e 1
+centralidade_autovetor_norm <- (centralidade_autovetor - min(centralidade_autovetor)) / (max(centralidade_autovetor) - min(centralidade_autovetor))
+
+# Atribuir cores aos nós com base nos valores normalizados
+cores_centralidade_autovetor <- colorRampPalette(c("lightgreen", "darkgreen"))(length(centralidade_autovetor_norm))
+
+# Atribuir cores aos vértices com base na centralidade do autovetor normalizada
+vertices_filtrados$color <- cores_centralidade_autovetor
+
+# Garantir que todos os setores estejam tratados como grupos
+vertices_filtrados$group <- vertices_filtrados$setor
+
+# Gerar a visualização da rede
+visNetwork(nodes = vertices_filtrados, edges = rede_2_jun2022_a_mai2023) %>%
+  visIgraphLayout() %>%
+  visNodes(font = list(size = 20)) %>%
+  visOptions(
+    highlightNearest = TRUE, 
+    nodesIdSelection = list(enabled = TRUE, useLabels = TRUE),
+    selectedBy = list(variable = "name")
+  )
+
+```
+
+
+## Row {data-width="50"}
+
+### **Centralidade do autovetor na comunidade ao qual pertence o Instituto Cordial**
+
+Na análise de redes, diversas medidas são informativas sobre a rede, dentre elas, as de centralidade. A centralidade de grau mede a importância de um vértice pela quantidade de conexões diretas que ele possui, indicando a quantidade de arestas incidentes no vértice. Já a centralidade do autovetor vai além e considera não apenas o número de conexões, mas também a qualidade dessas conexões. Ela atribui maior importância a um vértice se ele está conectado a outros vértices igualmente importantes, sendo calculada a partir do principal autovetor da matriz de adjacência da rede. Em resumo, enquanto a centralidade de grau foca na quantidade de conexões, a centralidade do autovetor valoriza a influência dos vértices conectados. Nas tabelas abaixo, é possível comparar as duas medidas. Como o Instituto Cordial apresenta a maior centralidade da comunidade que pertence, a centralidade do autovetor é calculado a partir dele, recebendo o valor máximo de 1.
+
+## Row {data-width="200"}
+
+### **Centralidade**
+
+```{r include=FALSE}
+# Identificar a comunidade do Instituto Cordial
+id_instituto_cordial <- 1461195421
+comunidade_cordial <- comunidades$membership[which(V(net_2_jun2022_a_mai2023)$name == id_instituto_cordial)]
+
+# Extrair os vértices (IDs) que pertencem à comunidade do Instituto Cordial
+vertices_comunidade <- which(comunidades$membership == comunidade_cordial)
+
+# Extrair o subgrafo da comunidade do Instituto Cordial
+subgrafo_comunidade <- induced_subgraph(net_2_jun2022_a_mai2023, vids = vertices_comunidade)
+
+# Criar a matriz de adjacência do subgrafo
+matriz_subgrafo_comunidade <- as_adjacency_matrix(subgrafo_comunidade, sparse = FALSE)
+
+# Calcular a centralidade de grau para os vértices na comunidade
+centralidade_grau <- degree(matriz_subgrafo_comunidade)
+
+# Encontrar os índices dos cinco vértices com a maior centralidade de grau
+indices_top5_centralidade <- order(centralidade_grau, decreasing = TRUE)[1:5]
+ids_top5_centralidade <- V(subgrafo_comunidade)$name[indices_top5_centralidade]
+valores_top5_centralidade <- centralidade_grau[indices_top5_centralidade]
+
+# Criar um data frame com IDs e centralidades
+df_centralidade <- data.frame(id = ids_top5_centralidade, centralidade_grau = valores_top5_centralidade)
+
+# Obter os nomes completos das entidades com maior centralidade a partir da tabela de vértices filtrados
+entidades_top5_centralidade <- vertices_filtrados %>%
+  filter(id %in% ids_top5_centralidade) %>%
+  select(id, nome_entidade)
+
+# Combinar os data frames
+entidades_top5_centralidade <- merge(entidades_top5_centralidade, df_centralidade, by = "id")
+
+# Remover a coluna de ID
+entidades_top5_centralidade <- entidades_top5_centralidade %>%
+  select(-id)
+
+# Exibir a tabela formatada
+entidades_top5_centralidade <- datatable(entidades_top5_centralidade, 
+          options = list(dom = 't', paging = FALSE, searching = FALSE),
+          rownames = FALSE,
+          colnames = c("Nome da Entidade", "Centralidade de Grau"))
+
+```
+
+```{r include=TRUE}
+# Mostrar tabela com centralidade
+entidades_top5_centralidade
+```
+
+### **Centralidade do autovetor**
+
+```{r include=FALSE}
+# Identificar a comunidade do Instituto Cordial
+id_instituto_cordial <- 1461195421
+comunidade_cordial <- comunidades$membership[which(V(net_2_jun2022_a_mai2023)$name == id_instituto_cordial)]
+
+# Extrair os vértices (IDs) que pertencem à comunidade do Instituto Cordial
+vertices_comunidade <- which(comunidades$membership == comunidade_cordial)
+
+# Extrair o subgrafo da comunidade do Instituto Cordial
+subgrafo_comunidade <- induced_subgraph(net_2_jun2022_a_mai2023, vids = vertices_comunidade)
+
+# Calcular a centralidade do autovetor para os vértices na comunidade
+centralidade_autovetor <- eigen_centrality(subgrafo_comunidade)$vector
+
+# Encontrar os índices dos cinco vértices com a maior centralidade do autovetor
+indices_top5_centralidade <- order(centralidade_autovetor, decreasing = TRUE)[1:5]
+ids_top5_centralidade <- V(subgrafo_comunidade)$name[indices_top5_centralidade]
+valores_top5_centralidade <- centralidade_autovetor[indices_top5_centralidade]
+
+# Criar um data frame com IDs e centralidades
+df_centralidade <- data.frame(id = ids_top5_centralidade, centralidade_autovetor = valores_top5_centralidade)
+
+# Obter os nomes completos das entidades com maior centralidade a partir da tabela de vértices filtrados
+entidades_top5_centralidade <- vertices_filtrados %>%
+  filter(id %in% ids_top5_centralidade) %>%
+  select(id, nome_entidade)
+
+# Combinar os data frames
+entidades_top5_centralidade <- merge(entidades_top5_centralidade, df_centralidade, by = "id")
+
+# Remover a coluna de ID
+entidades_top5_centralidade <- entidades_top5_centralidade %>%
+  select(-id)
+
+# Exibir a tabela formatada
+entidades_top5_centralidade <- datatable(entidades_top5_centralidade, 
+                                         options = list(dom = 't', paging = FALSE, searching = FALSE),
+                                         rownames = FALSE,
+                                         colnames = c("Nome da Entidade", "Centralidade do Autovetor"))
+
+```
+
+```{r include=TRUE}
+# Mostrar tabela com centralidade do autovetor
+entidades_top5_centralidade
+```
+
+### **Grafo da comunidade**
+
+```{r include=TRUE}
+# Normalizar os valores de centralidade do autovetor para o intervalo [0, 1]
+centralidade_autovetor_norm <- (centralidade_autovetor - min(centralidade_autovetor)) / (max(centralidade_autovetor) - min(centralidade_autovetor))
+
+# Gerar uma paleta de cores em gradiente
+paleta_cores <- colorRampPalette(brewer.pal(9, "Blues"))(100)
+
+# Atribuir cores aos vértices com base na centralidade normalizada
+cores_vertices <- paleta_cores[as.numeric(cut(centralidade_autovetor_norm, breaks = 100))]
+
+# Encontrar o índice do vértice do Instituto Cordial no subgrafo
+indice_cordial_subgrafo <- which(V(subgrafo_comunidade)$name == id_instituto_cordial)
+
+# Adicionar o nome do Instituto Cordial aos rótulos dos vértices
+rotulos_vertices <- rep(NA, vcount(subgrafo_comunidade))
+rotulos_vertices[indice_cordial_subgrafo] <- "Instituto Cordial"
+
+# Plotar a sub-rede
+plot(subgrafo_comunidade, 
+     vertex.color = cores_vertices, 
+     vertex.size = 5, 
+     vertex.label = rotulos_vertices, 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.8, 
+     edge.arrow.size = 0.5,
+     main = "Sub-rede da Comunidade do Instituto Cordial\nColorida pela Centralidade do Autovetor")
+```
+
+```{r}
+
+# Carregar os pacotes necessários
+library(rsconnect)
+
+# Definir o caminho para o diretório do projeto
+caminho <- "C:/Users/Jaqueline/Desktop/JAQUELINE/CORDIAL/ANALISE DE REDES/SCRIPT R"
+
+# Fazer o deploy do Flexdashboard
+rsconnect::deployApp(appDir = caminho, appPrimaryDoc = "dash.Rmd")
+
+
+
+``` 
+
+
